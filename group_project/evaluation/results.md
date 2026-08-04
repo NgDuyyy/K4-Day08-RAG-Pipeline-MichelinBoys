@@ -4,7 +4,7 @@
 
 > **Evaluation Framework**: [RAGAS](https://github.com/explodinggradients/ragas) v0.1.21 —
 > 4 metric chuẩn (Faithfulness, Answer Relevancy, Context Recall, Context Precision), chấm
-> điểm bằng LLM-judge thật (OpenAI), chạy trên 3 câu hỏi từ `golden_dataset.json`.
+> điểm bằng LLM-judge thật (OpenAI), chạy trên 16 câu hỏi từ `golden_dataset.json`.
 
 ---
 
@@ -12,11 +12,11 @@
 
 | Metric | Config A (Hybrid + RRF Rerank) | Config B (Dense-Only) | Δ (A vs B) |
 |--------|---------------------------|----------------------|---|
-| **Faithfulness** | `0.5238` | `0.4900` | `+0.0338` |
-| **Answer Relevance** | `0.3034` | `0.5688` | `-0.2654` |
-| **Context Recall** | `1.0000` | `1.0000` | `+0.0000` |
-| **Context Precision** | `1.0000` | `1.0000` | `+0.0000` |
-| **Average Total** | **`0.7068`** | **`0.7647`** | **`-0.0579`** |
+| **Faithfulness** | `0.3781` | `0.5050` | `-0.1269` |
+| **Answer Relevance** | `0.2716` | `0.2662` | `+0.0054` |
+| **Context Recall** | `0.8750` | `0.7500` | `+0.1250` |
+| **Context Precision** | `0.9273` | `0.9345` | `-0.0072` |
+| **Average Total** | **`0.6130`** | **`0.6139`** | **`-0.0009`** |
 
 ---
 
@@ -33,7 +33,7 @@
 
 **Kết luận:**
 > Config B đạt hiệu năng tốt hơn Config A trong lần chạy này
-> (Average `0.7068` vs `0.7647`). Số liệu lấy trực tiếp từ
+> (Average `0.6130` vs `0.6139`). Số liệu lấy trực tiếp từ
 > RAGAS, không chỉnh sửa thủ công.
 
 ---
@@ -42,9 +42,9 @@
 
 | # | Question | Faithfulness | Relevance | Recall |
 |---|----------|-------------|-----------|--------|
-| 1 | Người mua có thể yêu cầu trả hàng/hoàn tiền trong thời hạn bao lâu sau khi nhận hàng? | 0.00 | 0.00 | 1.00 |
-| 2 | Người bán không được đăng bán những sản phẩm nào trên sàn? | 0.86 | 0.00 | 1.00 |
-| 3 | Shopee hỗ trợ những phương thức thanh toán nào? | 0.71 | 0.91 | 1.00 |
+| 1 | Mua hàng trên Shopee từ người bán quốc tế có cần trả thuế nhập khẩu không? | 0.00 | 0.00 | 0.00 |
+| 2 | ShopeePay Wallet bảo mật thông tin tài khoản người dùng bằng cách nào? | 0.67 | 0.00 | 0.00 |
+| 3 | Người bán bị xử phạt như thế nào nếu cố tình bán hàng giả, hàng nhái? | 0.00 | 0.00 | 1.00 |
 
 ---
 
