@@ -103,7 +103,33 @@ def retrieve(
     #         return fallback
     #
     # return final_results[:top_k]
-    raise NotImplementedError("Implement retrieve")
+    if not isinstance(query, str) or not query.strip() or top_k <= 0:
+        return []
+
+    candidate_count = max(top_k * 2, top_k)
+    dense_results = semantic_search(query, top_k=candidate_count)
+    sparse_results = lexical_search(query, top_k=candidate_count)
+    merged = rerank_rrf([dense_results, sparse_results], top_k=candidate_count)
+
+    for item in merged:
+        item["source"] = "hybrid"
+        item.setdefault("metadata", {})
+
+    if use_reranking and merged:
+        final_results = rerank(query, merged, top_k=top_k, method=RERANK_METHOD)
+    else:
+        final_results = merged[:top_k]
+
+    best_dense_score = dense_results[0]["score"] if dense_results else 0.0
+    if best_dense_score < score_threshold:
+        try:
+            fallback = pageindex_search(query, top_k=top_k)
+        except Exception:
+            fallback = []
+        if fallback:
+            return fallback[:top_k]
+
+    return final_results[:top_k]
 
 
 if __name__ == "__main__":

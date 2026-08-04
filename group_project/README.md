@@ -1,105 +1,82 @@
-# Bài Tập Nhóm — E-commerce Support RAG Chatbot
+# Bài Tập Nhóm (CP5) — E-commerce Support RAG Chatbot & Evaluation Pipeline
 
-## Mục Tiêu
-
-Sau khi hoàn thành bài cá nhân, nhóm ngồi lại để xây dựng **1 trong 2 sản phẩm**:
+Nhóm thực hiện: **MichelinBoys**
 
 ---
 
-## Yêu cầu 1: Sản phẩm nhóm RAG Chatbot
+## 🎯 Tổng Quan Dự Án
 
-Xây dựng chatbot trả lời câu hỏi về chính sách thương mại điện tử và hỗ trợ khách hàng liên quan.
+Dự án xây dựng chatbot thông minh hỗ trợ giải đáp các thắc mắc về chính sách thương mại điện tử (đổi trả, thanh toán, ví ShopeePay, SPayLater, bảo mật thông tin, quy định người bán). Dự án bao gồm đầy đủ **Giao diện Chatbot Streamlit** và **RAG Evaluation Pipeline (A/B Testing)**.
 
-**Yêu cầu:**
-- Giao diện chat (Streamlit / Gradio / Chainlit)
-- Trả lời có citation (dựa trên Task 10)
-- Hỗ trợ follow-up questions (conversation memory)
-- Hiển thị source documents đã dùng
-
-**Stack gợi ý:**
-```
-Chainlit/Streamlit → Retrieval (Task 9) → Generation (Task 10) → Display
-```
+### Thành phần chính:
+1. **Chatbot Web Application (`app.py`)**: Giao diện Streamlit tương tác, hỗ trợ trích dẫn nguồn (citations), hiển thị điểm số truy xuất, câu hỏi gợi ý và quản lý lịch sử trò chuyện.
+2. **Golden Dataset (`group_project/evaluation/golden_dataset.json`)**: Tập dữ liệu kiểm thử chuẩn gồm **16 câu hỏi và câu trả lời kỳ vọng**.
+3. **Evaluation Pipeline (`group_project/evaluation/eval_pipeline.py`)**: Tự động đánh giá 4 chỉ số RAG (Faithfulness, Answer Relevance, Context Recall, Context Precision) và thực hiện A/B Testing giữa Hybrid Search vs Dense-Only.
+4. **Báo cáo Kết quả (`group_project/evaluation/results.md`)**: Bảng so sánh chi tiết, phân tích thất bại trên 3 mẫu kém nhất (Worst Performers) và đề xuất hướng cải tiến.
 
 ---
 
-## Yêu cầu 2: RAG Evaluation Pipeline
+## 🏗️ Kiến Trúc Hệ Thống
 
-Sử dụng **1 trong 3 framework** sau để evaluate pipeline RAG của nhóm:
+```mermaid
+graph TD
+    User([User Query]) --> UI[Streamlit UI - app.py]
+    UI --> Pipe[Retrieval Pipeline - Task 9]
+    
+    subgraph Retrieval Pipeline
+        Pipe --> Sem[Semantic Search BAAI/bge-m3]
+        Pipe --> Lex[Lexical Search BM25]
+        Sem --> RRF[Reciprocal Rank Fusion - RRF k=60]
+        Lex --> RRF
+        RRF --> CosCheck{Cosine Score < 0.30?}
+        CosCheck -- Yes --> Fallback[PageIndex Vectorless Fallback]
+        CosCheck -- No --> Chunks[Top-K Hybrid Chunks]
+    end
 
-### Framework lựa chọn
-
-| Framework | Cài đặt | Đặc điểm |
-|-----------|---------|-----------|
-| [DeepEval](https://github.com/confident-ai/deepeval) | `pip install deepeval` | Nhiều metric built-in, dễ integrate với pytest |
-| [RAGAS](https://github.com/explodinggradients/ragas) | `pip install ragas` | Chuẩn industry cho RAG eval, 3 trục chính |
-| [TruLens](https://github.com/truera/trulens) | `pip install trulens` | Dashboard UI, feedback functions mạnh |
-
-### Yêu cầu Evaluation
-
-1. **Tạo Golden Dataset** — tối thiểu 15 cặp Q&A (question, expected_answer, expected_context)
-2. **Chạy evaluation** trên toàn bộ golden dataset với các metrics sau:
-   - **Faithfulness** — câu trả lời có bám đúng context không?
-   - **Answer Relevance** — câu trả lời có đúng câu hỏi không?
-   - **Context Recall** — retriever có lấy đủ evidence không?
-   - **Context Precision** — trong context lấy về, bao nhiêu % thực sự hữu ích?
-3. **So sánh A/B** — chạy eval trên ít nhất 2 config khác nhau (ví dụ: có reranking vs không reranking, hoặc hybrid vs dense-only)
-4. **Báo cáo** — bảng điểm + phân tích worst performers + đề xuất cải tiến
-
-Xem code mẫu (DeepEval/RAGAS/TruLens) chi tiết trong `README.md` gốc mục "Yêu cầu 2".
-
-### Deliverable Evaluation
-
-- [ ] File `group_project/evaluation/golden_dataset.json` — 15+ cặp Q&A
-- [ ] File `group_project/evaluation/eval_pipeline.py` — script chạy evaluation
-- [ ] File `group_project/evaluation/results.md` — bảng điểm + phân tích
-- [ ] So sánh A/B ít nhất 2 configs
-
----
-
-## Yêu Cầu Chung
-
-1. **Tích hợp pipeline** từ bài cá nhân của các thành viên
-2. **Demo hoạt động được** trong buổi trình bày (chạy local hoặc deploy)
-3. **Evaluation pipeline** chạy được và có báo cáo kết quả
-4. **Code push lên repository** chung của nhóm
-5. **README** mô tả kiến trúc và phân công (điền bên dưới)
-
----
-
-## Kiến Trúc Hệ Thống
-
-```
-[Vẽ diagram kiến trúc ở đây]
+    Fallback --> Reorder[Document Reordering: Front + Back]
+    Chunks --> Reorder
+    Reorder --> LLM[LLM Generation: GPT-4o-mini / OpenRouter]
+    LLM --> Answer[Answer with Citations & Sources]
+    Answer --> UI
 ```
 
 ---
 
-## Phân Công Công Việc
+## 📋 Phân Công Công Việc Nhóm (MichelinBoys)
 
-| Thành viên | MSSV | Nhiệm vụ | Trạng thái |
-|-----------|------|----------|------------|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| Thành viên | Vai trò | Nhiệm vụ đảm nhận | Trạng thái |
+|-----------|---------|-------------------|------------|
+| **MichelinBoys Leader** | Team Leader & RAG Architect | Quản lý dự án, kiểm thử `pytest`, thiết kế kiến trúc RAG Pipeline | **Hoàn thành** |
+| **Data Specialist** | Data & Pipeline Engineer | Xây dựng Task 1..4, Task 9 (Hybrid Search, RRF Rerank, PageIndex Fallback) | **Hoàn thành** |
+| **Frontend Dev** | UI & Chatbot Engineer | Xây dựng Task 10, giao diện Streamlit `app.py`, trích dẫn nguồn citation | **Hoàn thành** |
+| **QA & Eval Engineer** | Evaluation Engineer | Xây dựng `golden_dataset.json`, script `eval_pipeline.py` & báo cáo `results.md` | **Hoàn thành** |
 
 ---
 
-## Hướng Dẫn Chạy
+## 📊 Deliverables (Sản Phẩm Bàn Giao CP5)
 
+- [x] **Streamlit UI (`app.py`)**: Chạy ổn định, hỗ trợ citation, top_k slider, clear history, nguồn tham khảo.
+- [x] **Golden Dataset (`group_project/evaluation/golden_dataset.json`)**: 16 bộ Q&A được chuẩn hóa từ chính sách thương mại điện tử.
+- [x] **Evaluation Script (`group_project/evaluation/eval_pipeline.py`)**: Tính toán tự động 4 metrics RAG và so sánh A/B.
+- [x] **Evaluation Report (`group_project/evaluation/results.md`)**: Đầy đủ bảng điểm A/B testing, worst performers & recommendations.
+
+---
+
+## 🚀 Hướng Dẫn Chạy Dự Án
+
+### 1. Khởi động Chatbot UI (Streamlit)
 ```bash
-# Cài đặt dependencies
-pip install -r requirements.txt
-
-# Chạy app
-streamlit run app.py
-# hoặc
-chainlit run app.py
+# Sử dụng virtual environment của dự án
+.venv\Scripts\streamlit.exe run app.py
 ```
 
----
+### 2. Thực thi RAG Evaluation Pipeline (A/B Testing)
+```bash
+# Chạy đánh giá và cập nhật báo cáo results.md
+.venv\Scripts\python.exe group_project/evaluation/eval_pipeline.py
+```
 
-## Lưu ý
-
-Hãy giữ lại repo này nếu như bạn học track 3 giai đoạn 2, chúng ta sẽ phát triển tiếp dự án lên knowledge graph để khắc phục các câu hỏi hóc búa khi có các câu hỏi khó.
+### 3. Kiểm tra toàn bộ Unit Tests
+```bash
+.venv\Scripts\python.exe -m pytest tests/test_individual.py
+```

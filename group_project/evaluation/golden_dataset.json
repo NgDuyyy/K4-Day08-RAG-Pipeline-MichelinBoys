@@ -1,17 +1,82 @@
 [
   {
     "question": "Người mua có thể yêu cầu trả hàng/hoàn tiền trong thời hạn bao lâu sau khi nhận hàng?",
-    "expected_answer": "Trong vòng 15 ngày kể từ khi giao hàng thành công (24 giờ đối với thực phẩm tươi sống/đông lạnh).",
-    "expected_context": "Trang Returns and Refunds Policy, mục Return/Refund Eligibility"
+    "expected_answer": "Người mua có thể gửi yêu cầu trả hàng/hoàn tiền trong vòng 15 ngày kể từ khi đơn hàng được cập nhật giao hàng thành công (hoặc 24 giờ đối với sản phẩm là thực phẩm tươi sống/đông lạnh).",
+    "expected_context": "Chính sách trả hàng và hoàn tiền Shopee, thời hạn yêu cầu 15 ngày."
   },
   {
     "question": "Shopee hỗ trợ những phương thức thanh toán nào?",
-    "expected_answer": "ShopeePay Wallet, thẻ tín dụng/ghi nợ, trả góp qua thẻ, QR Code, chuyển khoản qua app ngân hàng, thẻ NAPAS, Apple Pay, Google Pay, và COD.",
-    "expected_context": "Trang Payment Methods Overview"
+    "expected_answer": "Shopee hỗ trợ nhiều phương thức thanh toán gồm: Ví ShopeePay, Thẻ tín dụng/ghi nợ (Visa, Mastercard, JCB), Trả góp qua thẻ tín dụng, SPayLater, Thanh toán khi nhận hàng (COD), Chuyển khoản ngân hàng, Mã QR Ngân hàng/VietQR, Thẻ ATM nội địa (NAPAS), Apple Pay và Google Pay.",
+    "expected_context": "Hướng dẫn các phương thức thanh toán được hỗ trợ trên Shopee."
   },
   {
-    "question": "Người bán không được đăng bán những sản phẩm nào?",
-    "expected_answer": "Hàng giả/nhái, sản phẩm bất hợp pháp, vi phạm sở hữu trí tuệ, và các mặt hàng nằm trong danh sách cấm của sàn.",
-    "expected_context": "Trang Product Listing Regulations, mục Prohibited Content"
+    "question": "Người bán không được đăng bán những sản phẩm nào trên sàn?",
+    "expected_answer": "Người bán không được đăng bán hàng giả, hàng nhái, sản phẩm vi phạm quyền sở hữu trí tuệ, chất cấm, vũ khí, chất cháy nổ, động vật hoang dã, thuốc trừ sâu nguy hại và các hàng hóa dịch vụ bị pháp luật cấm kinh doanh.",
+    "expected_context": "Chính sách sản phẩm cấm và hạn chế bán trên Shopee."
+  },
+  {
+    "question": "SPayLater là gì và ai được phép sử dụng dịch vụ này?",
+    "expected_answer": "SPayLater là dịch vụ mua trước trả sau được cung cấp bởi ngân hàng đối tác liên kết trên Shopee, dành cho người dùng Shopee đáp ứng điều kiện tiêu chuẩn tín dụng và xác thực tài khoản theo quy định.",
+    "expected_context": "Điều khoản và điều kiện dịch vụ SPayLater dành cho người dùng Shopee."
+  },
+  {
+    "question": "Làm thế nào để thay đổi phương thức thanh toán sau khi đã đặt hàng thành công?",
+    "expected_answer": "Người mua chỉ có thể thay đổi phương thức thanh toán nếu đơn hàng chưa chuyển sang trạng thái đang giao/đã vận chuyển, bằng cách hủy đơn hàng cũ và tiến hành đặt lại đơn mới với phương thức thanh toán mong muốn.",
+    "expected_context": "Hướng dẫn xử lý và thay đổi phương thức thanh toán đơn hàng."
+  },
+  {
+    "question": "Shopee thu thập những thông tin cá nhân nào của người dùng?",
+    "expected_answer": "Shopee thu thập thông tin cá nhân bao gồm họ tên, địa chỉ email, ngày sinh, địa chỉ giao hàng, số điện thoại, thông tin tài khoản ngân hàng/thanh toán, vị trí địa lý, thông tin thiết bị và dữ liệu truy cập.",
+    "expected_context": "Chính sách bảo mật Shopee - Các loại dữ liệu cá nhân thu thập."
+  },
+  {
+    "question": "Trường hợp nào người mua được chấp nhận trả hàng hoàn tiền?",
+    "expected_answer": "Người mua được chấp nhận trả hàng hoàn tiền khi: sản phẩm bị lỗi/hỏng do vận chuyển hoặc nhà sản xuất, giao sai sản phẩm, thiếu hàng, sản phẩm không đúng như mô tả, hoặc hàng giả/hàng nhái.",
+    "expected_context": "Điều kiện chấp nhận yêu cầu trả hàng và hoàn tiền."
+  },
+  {
+    "question": "Làm sao để liên hệ với bộ phận Chăm sóc khách hàng Shopee?",
+    "expected_answer": "Người dùng có thể liên hệ CSKH Shopee qua tính năng Chat trực tiếp trên ứng dụng Shopee (hoạt động 24/7), gửi yêu cầu qua Trung tâm hỗ trợ hoặc gọi Tổng đài hỗ trợ khách hàng Shopee.",
+    "expected_context": "Các kênh liên hệ bộ phận hỗ trợ chăm sóc khách hàng Shopee."
+  },
+  {
+    "question": "Quy trình xử lý khi nhận được hàng bị hư hỏng hoặc bể vỡ như thế nào?",
+    "expected_answer": "Người mua cần bấm Yêu cầu Trả hàng/Hoàn tiền trên ứng dụng, chụp ảnh/quay video hiện trạng gói hàng và sản phẩm bị hỏng làm bằng chứng, sau đó chọn lý do Hàng bị hư hỏng/bể vỡ để hệ thống và người bán xử lý.",
+    "expected_context": "Hướng dẫn gửi bằng chứng và khiếu nại sản phẩm bể vỡ khi vận chuyển."
+  },
+  {
+    "question": "Phí vận chuyển đơn hàng Shopee được tính dựa trên yếu tố nào?",
+    "expected_answer": "Phí vận chuyển được tính dựa trên trọng lượng, kích thước đóng gói của sản phẩm, khoảng cách địa lý giữa kho người bán và địa chỉ người mua, cũng như đơn vị vận chuyển được lựa chọn.",
+    "expected_context": "Cách tính phí vận chuyển và các yếu tố ảnh hưởng trên Shopee."
+  },
+  {
+    "question": "Người bán bị xử phạt như thế nào nếu cố tình bán hàng giả, hàng nhái?",
+    "expected_answer": "Shopee sẽ xóa sản phẩm vi phạm, khóa hoặc chấm dứt vĩnh viễn tài khoản người bán, cấn trừ điểm Sao Quả Tạ và có thể chuyển thông tin cho cơ quan chức năng xử lý theo quy định pháp luật.",
+    "expected_context": "Quy định xử phạt người bán vi phạm chính sách hàng giả hàng nhái."
+  },
+  {
+    "question": "ShopeePay Wallet bảo mật thông tin tài khoản người dùng bằng cách nào?",
+    "expected_answer": "ShopeePay bảo mật bằng hệ thống mã hóa dữ liệu SSL/TLS, xác thực 2 lớp (OTP/mật khẩu thanh toán/vân tay/Face ID) và hệ thống phát hiện gian lận tự động theo chuẩn an toàn PCI-DSS.",
+    "expected_context": "Biện pháp an toàn và bảo mật thông tin trên ví ShopeePay."
+  },
+  {
+    "question": "Làm thế nào để yêu cầu hủy tài khoản Shopee?",
+    "expected_answer": "Người dùng vào Thiết lập tài khoản trong app Shopee, chọn Yêu cầu hủy tài khoản. Tài khoản chỉ được hủy khi không còn đơn hàng đang xử lý, không có tranh chấp hay nợ tiền.",
+    "expected_context": "Quy trình và điều kiện yêu cầu hủy tài khoản người dùng."
+  },
+  {
+    "question": "Lý do khiến tài khoản người dùng bị khóa hoặc tạm dừng hoạt động là gì?",
+    "expected_answer": "Tài khoản có thể bị khóa do có hành vi gian lận đơn hàng, tạo đơn ảo, lạm dụng mã giảm giá, sử dụng phần mềm can thiệp hệ thống hoặc vi phạm nghiêm trọng Điều khoản dịch vụ.",
+    "expected_context": "Chính sách an toàn tài khoản và các lý do tài khoản bị tạm khóa."
+  },
+  {
+    "question": "Mua hàng trên Shopee từ người bán quốc tế có cần trả thuế nhập khẩu không?",
+    "expected_answer": "Giá hiển thị trên Shopee đối với sản phẩm quốc tế thường đã bao gồm các khoản thuế nhập khẩu và phí liên quan theo quy định hiện hành, ngoại trừ các trường hợp có thông báo riêng.",
+    "expected_context": "Quy định về thuế và phí khi mua sắm hàng hóa quốc tế trên Shopee."
+  },
+  {
+    "question": "Làm thế nào để khiếu nại nếu không đồng ý với kết quả xử lý trả hàng của người bán?",
+    "expected_answer": "Người mua có thể bấm Khiếu nại lên Shopee trong vòng 3 ngày kể từ khi người bán từ chối yêu cầu. Đội ngũ Shopee sẽ trực tiếp kiểm tra bằng chứng của cả 2 bên và đưa ra phán quyết cuối cùng.",
+    "expected_context": "Quy trình khiếu nại quyết định trả hàng hoàn tiền lên Shopee."
   }
 ]

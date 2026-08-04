@@ -85,7 +85,9 @@ def reorder_for_llm(chunks: list[dict]) -> list[dict]:
     # front = chunks[::2]   # index 0, 2, 4 -> đặt ở đầu
     # back = chunks[1::2]   # index 1, 3    -> đặt ở cuối (reversed)
     # return front + back[::-1]
-    raise NotImplementedError("Implement reorder_for_llm")
+    if len(chunks) <= 2:
+        return list(chunks)
+    return list(chunks[::2]) + list(chunks[1::2])[::-1]
 
 
 # =============================================================================
@@ -114,7 +116,16 @@ def format_context(chunks: list[dict]) -> str:
     #         f"{chunk['content']}\n"
     #     )
     # return "\n---\n".join(context_parts)
-    raise NotImplementedError("Implement format_context")
+    context_parts = []
+    for i, chunk in enumerate(chunks, 1):
+        metadata = chunk.get("metadata") or {}
+        source = metadata.get("source", f"Source {i}")
+        doc_type = metadata.get("type", "unknown")
+        context_parts.append(
+            f"[Document {i} | Source: {source} | Type: {doc_type}]\n"
+            f"{chunk.get('content', '')}"
+        )
+    return "\n\n---\n\n".join(context_parts)
 
 
 # =============================================================================
@@ -180,7 +191,59 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
     #     "sources": chunks,
     #     "retrieval_source": chunks[0].get("source", "hybrid") if chunks else "none"
     # }
-    raise NotImplementedError("Implement generate_with_citation")
+    if not isinstance(query, str) or not query.strip():
+        return {"answer": "Vui lòng nhập câu hỏi.", "sources": [], "retrieval_source": "none"}
+
+    chunks = retrieve(query, top_k=top_k)
+    reordered = reorder_for_llm(chunks)
+    context = format_context(reordered)
+    retrieval_source = chunks[0].get("source", "hybrid") if chunks else "none"
+
+    if not chunks:
+        return {
+            "answer": "Tôi không thể xác minh thông tin này từ nguồn hiện có.",
+            "sources": [],
+            "retrieval_source": retrieval_source,
+        }
+
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+    openai_key = os.getenv("OPENAI_API_KEY")
+
+    answer = ""
+    if openrouter_key or openai_key:
+        try:
+            from openai import OpenAI
+
+            if openrouter_key:
+                client = OpenAI(api_key=openrouter_key, base_url="https://openrouter.ai/api/v1", timeout=15.0)
+                model_name = LLM_MODEL
+            else:
+                client = OpenAI(api_key=openai_key, timeout=15.0)
+                model_name = "gpt-4o-mini"
+
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"},
+                ],
+                temperature=TEMPERATURE,
+                top_p=TOP_P,
+            )
+            answer = response.choices[0].message.content or ""
+        except Exception:
+            answer = ""
+
+    if not answer:
+        best = chunks[0]
+        source = (best.get("metadata") or {}).get("source", "Source 1")
+        answer = f"Theo nguồn [{source}], {best.get('content', '').strip()}"
+
+    return {
+        "answer": answer,
+        "sources": chunks,
+        "retrieval_source": retrieval_source,
+    }
 
 
 if __name__ == "__main__":

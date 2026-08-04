@@ -48,14 +48,14 @@ CHUNK_SIZE = 800
 CHUNK_OVERLAP = 100
 CHUNKING_METHOD = "recursive"  # "recursive" | "markdown_header" | "semantic"
 
-# Embedding: BAAI/bge-m3 — multilingual, tốt cho cả tiếng Việt lẫn tiếng Anh, cần cho
-# domain luật lao động Việt Nam.
+# Embedding: BAAI/bge-m3 — multilingual, tốt cho tiếng Việt (chính sách Shopee VN viết
+# hoàn toàn bằng tiếng Việt) lẫn tiếng Anh (thuật ngữ như SPayLater, COD).
 EMBEDDING_MODEL = "BAAI/bge-m3"
 EMBEDDING_DIM = 1024
 
 # Vector store: ChromaDB — đơn giản, local persistent, không cần Docker.
 VECTOR_STORE = "chromadb"
-COLLECTION_NAME = "labor_law_support_docs"
+COLLECTION_NAME = "ecommerce_support_docs"
 
 
 # =============================================================================
@@ -93,19 +93,19 @@ def get_collection():
 
 # Nhãn customer_role suy luận từ NỘI DUNG (title/đoạn đầu file), không phải tên file —
 # vì các bài crawl được lưu dạng "article_01.md" không mang thông tin chủ đề.
-_EMPLOYER_KEYWORDS = ("kỷ luật lao động", "xử lý vi phạm", "sa thải nhân viên", "quyền sa thải",
-                      "tuyển dụng", "trách nhiệm của người sử dụng lao động")
-_EMPLOYEE_KEYWORDS = ("thử việc", "nghỉ phép", "làm thêm giờ", "bảo hiểm thất nghiệp",
-                      "quyền lợi người lao động", "lương thử việc", "học việc")
+_SELLER_KEYWORDS = ("người bán", "nhà bán hàng", "đăng bán sản phẩm", "phí sàn",
+                    "shop của bạn", "kênh người bán")
+_BUYER_KEYWORDS = ("người mua", "khách hàng", "đơn hàng", "mua hàng", "trả hàng",
+                   "hoàn tiền", "giao hàng", "thanh toán khi nhận hàng")
 
 
 def _infer_customer_role(text: str) -> str:
-    """Suy luận employee/employer/both từ nội dung đầu văn bản (~500 ký tự đầu)."""
+    """Suy luận buyer/seller/both từ nội dung đầu văn bản (~500 ký tự đầu)."""
     lowered = text[:500].lower()
-    if any(k in lowered for k in _EMPLOYER_KEYWORDS):
-        return "employer"
-    if any(k in lowered for k in _EMPLOYEE_KEYWORDS):
-        return "employee"
+    if any(k in lowered for k in _SELLER_KEYWORDS):
+        return "seller"
+    if any(k in lowered for k in _BUYER_KEYWORDS):
+        return "buyer"
     return "both"
 
 

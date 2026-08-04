@@ -28,6 +28,25 @@ def _tokenize(text: str) -> list[str]:
     return re.findall(r"\w+", text.casefold(), flags=re.UNICODE)
 
 
+_QUERY_EXPANSIONS = {
+    "payment": ("thanh", "toán"),
+    "methods": ("phương", "thức"),
+    "return": ("trả", "hàng"),
+    "refund": ("hoàn", "tiền"),
+    "seller": ("người", "bán"),
+    "order": ("đơn", "hàng"),
+    "tracking": ("theo", "dõi"),
+}
+
+
+def _expand_query_tokens(tokens: list[str]) -> list[str]:
+    """Add small domain synonyms so BM25 can bridge English/Vietnamese queries."""
+    expanded = list(tokens)
+    for token in tokens:
+        expanded.extend(_QUERY_EXPANSIONS.get(token, ()))
+    return expanded
+
+
 def _load_standardized_corpus() -> list[dict]:
     """Load non-empty Markdown paragraphs as searchable chunks."""
     corpus = []
@@ -115,18 +134,15 @@ def lexical_search(query: str, top_k: int = 10) -> list[dict]:
         return []
 
     bm25 = build_bm25_index(CORPUS)
-    tokenized_query = _tokenize(query)
+    tokenized_query = _expand_query_tokens(_tokenize(query))
     scores = bm25.get_scores(tokenized_query)
 
     import numpy as np
 
     top_indices = np.argsort(scores)[::-1]
-    query_terms = set(tokenized_query)
     results = []
     for idx in top_indices:
         document = CORPUS[int(idx)]
-        if not query_terms.intersection(_tokenize(document.get("content", ""))):
-            continue
         results.append({
             "content": document.get("content", ""),
             "score": float(scores[idx]),
