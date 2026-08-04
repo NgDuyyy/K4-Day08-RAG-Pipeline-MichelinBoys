@@ -33,14 +33,13 @@ def setup_directory():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# TODO: Điền danh sách URL bài viết cần crawl
-# 5 trang chuyên đề Luật Lao Động Việt Nam (100% công khai, không bị Cloudflare chặn, >15KB/bài)
+# 5 bài hướng dẫn hỗ trợ khách hàng từ Shopee (theo dõi đơn hàng, thanh toán, hoàn tiền)
 ARTICLE_URLS = [
-    "https://vi.wikipedia.org/wiki/B%E1%BB%99_lu%E1%BA%ADt_Lao_%C4%91%E1%BB%99ng_(Vi%E1%BB%87t_Nam)",  # 1. Bộ luật Lao động Việt Nam (Quyền, nghĩa vụ, điều khoản chung)
-    "https://vi.wikipedia.org/wiki/H%E1%BB%A3p_%C4%91%E1%BB%93ng_lao_%C4%91%E1%BB%99ng",  # 2. Hợp đồng lao động (Các loại hợp đồng, ký kết, chấm dứt, kỷ luật)
-    "https://vi.wikipedia.org/wiki/B%E1%BA%A3o_hi%E1%BB%83m_x%C3%A3_h%E1%BB%99i_Vi%E1%BB%87t_Nam",  # 3. Bảo hiểm xã hội Việt Nam (Chế độ hưu trí, thai sản, ốm đau)
-    "https://vi.wikipedia.org/wiki/B%E1%BA%A3o_hi%E1%BB%83m_th%E1%BA%A5t_nghi%E1%BB%87p",  # 4. Bảo hiểm thất nghiệp (Điều kiện hưởng, trợ cấp, thủ tục)
-    "https://vi.wikipedia.org/wiki/Ti%E1%BB%81n_l%C6%B0%C6%A1ng",  # 5. Tiền lương & chế độ đãi ngộ (Lương tối thiểu, làm thêm giờ)
+    "https://shopee.vn/blog/kiem-tra-don-hang-shopee/",  # 1. Kiểm tra đơn hàng Shopee
+    "https://help.shopee.vn/portal/4/article/183296-[%C4%90%C6%A1n-Qu%E1%BB%91c-T%E1%BA%BF]-H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-b%E1%BB%95-sung-th%C3%B4ng-tin-Ng%C6%B0%E1%BB%9Di-mua-cho-%C4%91%C6%A1n-h%C3%A0ng",  # 2. Bổ sung thông tin người mua cho đơn hàng quốc tế
+    "https://help.shopee.vn/portal/4/article/189473-[Tr%E1%BA%A3-h%C3%A0ng/-Ho%C3%A0n-ti%E1%BB%81n]-Th%E1%BB%9Di-gian-nh%E1%BA%ADn-ti%E1%BB%81n-ho%C3%A0n-v%C3%A0-c%C3%A1ch-ki%E1%BB%83m-tra-ti%E1%BB%81n-ho%C3%A0n",  # 3. Thời gian nhận tiền hoàn & cách kiểm tra
+    "https://help.shopee.vn/portal/4/article/79295-[Mua-h%C3%A0ng]-H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-ch%E1%BB%8Dn-ph%C6%B0%C6%A1ng-th%E1%BB%A9c-thanh-to%C3%A1n-khi-nh%E1%BA%ADn-h%C3%A0ng-(COD)",  # 4. Hướng dẫn chọn phương thức thanh toán COD
+    "https://help.shopee.vn/portal/4/article/89669-[SPayLater]-C%C3%A2u-h%E1%BB%8Fi-th%C6%B0%E1%BB%9Dng-g%E1%BA%B7p-khi-k%C3%ADch-ho%E1%BA%A1t-SPayLater",  # 5. Câu hỏi thường gặp SPayLater
 ]
 
 
