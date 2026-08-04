@@ -15,10 +15,36 @@ BM25 hoạt động thế nào:
     - k1=1.5 (term saturation), b=0.75 (length normalization)
 """
 
+import re
 from pathlib import Path
 
 # TODO: Load corpus từ data/standardized/ hoặc từ vector store
 CORPUS: list[dict] = []  # List of {'content': str, 'metadata': dict}
+STANDARDIZED_DIR = Path(__file__).parent.parent / "data" / "standardized"
+
+
+def _tokenize(text: str) -> list[str]:
+    """Tokenize consistently while preserving Vietnamese letters."""
+    return re.findall(r"\w+", text.casefold(), flags=re.UNICODE)
+
+
+def _load_standardized_corpus() -> list[dict]:
+    """Load non-empty Markdown paragraphs as searchable chunks."""
+    corpus = []
+    for md_file in sorted(STANDARDIZED_DIR.rglob("*.md")):
+        content = md_file.read_text(encoding="utf-8", errors="replace")
+        chunks = [chunk.strip() for chunk in re.split(r"\n\s*\n", content) if chunk.strip()]
+        doc_type = "legal" if "legal" in md_file.parts else "news"
+        for chunk_index, chunk in enumerate(chunks):
+            corpus.append({
+                "content": chunk,
+                "metadata": {
+                    "source": md_file.name,
+                    "type": doc_type,
+                    "chunk_index": chunk_index,
+                },
+            })
+    return corpus
 
 
 def build_bm25_index(corpus: list[dict]):
@@ -36,7 +62,14 @@ def build_bm25_index(corpus: list[dict]):
     # tokenized_corpus = [doc["content"].lower().split() for doc in corpus]
     # bm25 = BM25Okapi(tokenized_corpus)
     # return bm25
-    raise NotImplementedError("Implement build_bm25_index")
+    if not corpus:
+        return None
+
+    from rank_bm25 import BM25Plus
+
+    tokenized_corpus = [_tokenize(doc.get("content", "")) for doc in corpus]
+    bm25 = BM25Plus(tokenized_corpus)
+    return bm25
 
 
 def lexical_search(query: str, top_k: int = 10) -> list[dict]:
@@ -73,7 +106,35 @@ def lexical_search(query: str, top_k: int = 10) -> list[dict]:
     #             "metadata": CORPUS[idx]["metadata"]
     #         })
     # return results
-    raise NotImplementedError("Implement lexical_search")
+    if not isinstance(query, str) or not query.strip() or top_k <= 0:
+        return []
+
+    if not CORPUS:
+        CORPUS.extend(_load_standardized_corpus())
+    if not CORPUS:
+        return []
+
+    bm25 = build_bm25_index(CORPUS)
+    tokenized_query = _tokenize(query)
+    scores = bm25.get_scores(tokenized_query)
+
+    import numpy as np
+
+    top_indices = np.argsort(scores)[::-1]
+    query_terms = set(tokenized_query)
+    results = []
+    for idx in top_indices:
+        document = CORPUS[int(idx)]
+        if not query_terms.intersection(_tokenize(document.get("content", ""))):
+            continue
+        results.append({
+            "content": document.get("content", ""),
+            "score": float(scores[idx]),
+            "metadata": dict(document.get("metadata") or {}),
+        })
+        if len(results) >= top_k:
+            break
+    return results
 
 
 if __name__ == "__main__":
