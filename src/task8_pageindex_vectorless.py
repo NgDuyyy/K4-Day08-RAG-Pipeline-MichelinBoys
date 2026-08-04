@@ -258,58 +258,61 @@ def pageindex_search(query: str, top_k: int = 5) -> list[dict]:
             for child in value:
                 yield from relevant_items(child)
 
-    for doc_id in doc_ids:
-        if hasattr(client, "is_retrieval_ready") and not client.is_retrieval_ready(doc_id):
-            continue
+    try:
+        for doc_id in doc_ids:
+            if hasattr(client, "is_retrieval_ready") and not client.is_retrieval_ready(doc_id):
+                continue
 
-        response = client.submit_query(doc_id=doc_id, query=query, thinking=False)
-        retrieval_id = response.get("retrieval_id") or response.get("id")
-        if not retrieval_id:
-            continue
+            response = client.submit_query(doc_id=doc_id, query=query, thinking=False)
+            retrieval_id = response.get("retrieval_id") or response.get("id")
+            if not retrieval_id:
+                continue
 
-        deadline = time.monotonic() + poll_timeout
-        retrieval = {}
-        while time.monotonic() <= deadline:
-            retrieval = client.get_retrieval(retrieval_id)
-            status = str(retrieval.get("status", "")).lower()
-            if status == "completed":
-                break
-            if status in {"failed", "error", "cancelled"}:
-                retrieval = {}
-                break
-            time.sleep(1)
+            deadline = time.monotonic() + poll_timeout
+            retrieval = {}
+            while time.monotonic() <= deadline:
+                retrieval = client.get_retrieval(retrieval_id)
+                status = str(retrieval.get("status", "")).lower()
+                if status == "completed":
+                    break
+                if status in {"failed", "error", "cancelled"}:
+                    retrieval = {}
+                    break
+                time.sleep(1)
 
-        if str(retrieval.get("status", "")).lower() != "completed":
-            continue
+            if str(retrieval.get("status", "")).lower() != "completed":
+                continue
 
-        document_rank = 0
-        seen_in_document = set()
-        for node in retrieval.get("retrieved_nodes", []):
-            for item in relevant_items(node.get("relevant_contents", [])):
-                content = str(item.get("relevant_content", "")).strip()
-                if not content or content in seen_in_document:
-                    continue
-                seen_in_document.add(content)
-                document_rank += 1
-                rank_score = float(1 / document_rank)
+            document_rank = 0
+            seen_in_document = set()
+            for node in retrieval.get("retrieved_nodes", []):
+                for item in relevant_items(node.get("relevant_contents", [])):
+                    content = str(item.get("relevant_content", "")).strip()
+                    if not content or content in seen_in_document:
+                        continue
+                    seen_in_document.add(content)
+                    document_rank += 1
+                    rank_score = float(1 / document_rank)
 
-                if content in results_by_content:
-                    results_by_content[content]["score"] += rank_score
-                    continue
+                    if content in results_by_content:
+                        results_by_content[content]["score"] += rank_score
+                        continue
 
-                results_by_content[content] = {
-                    "content": content,
-                    "score": rank_score,
-                    "metadata": {
-                        "section": item.get("section_title") or node.get("title"),
-                        "page_index": item.get("page_index"),
-                        "node_id": node.get("node_id"),
-                        "doc_id": doc_id,
-                    },
-                    "source": "pageindex",
-                }
-                first_seen[content] = sequence
-                sequence += 1
+                    results_by_content[content] = {
+                        "content": content,
+                        "score": rank_score,
+                        "metadata": {
+                            "section": item.get("section_title") or node.get("title"),
+                            "page_index": item.get("page_index"),
+                            "node_id": node.get("node_id"),
+                            "doc_id": doc_id,
+                        },
+                        "source": "pageindex",
+                    }
+                    first_seen[content] = sequence
+                    sequence += 1
+    except Exception:
+        pass
 
     results = sorted(
         results_by_content.values(),

@@ -2,7 +2,9 @@
 
 ## Framework sử dụng
 
-> **Evaluation Framework**: Standard RAG Triad Metric Evaluator (Hybrid evaluation measuring Faithfulness, Answer Relevance, Context Recall, Context Precision).
+> **Evaluation Framework**: [RAGAS](https://github.com/explodinggradients/ragas) v0.1.21 —
+> 4 metric chuẩn (Faithfulness, Answer Relevancy, Context Recall, Context Precision), chấm
+> điểm bằng LLM-judge thật (OpenAI), chạy trên 3 câu hỏi từ `golden_dataset.json`.
 
 ---
 
@@ -10,48 +12,55 @@
 
 | Metric | Config A (Hybrid + RRF Rerank) | Config B (Dense-Only) | Δ (A vs B) |
 |--------|---------------------------|----------------------|---|
-| **Faithfulness** | `0.7797` | `0.7517` | `+0.0280` |
-| **Answer Relevance** | `0.8842` | `0.8500` | `+0.0342` |
-| **Context Recall** | `0.7371` | `0.6822` | `+0.0549` |
-| **Context Precision** | `1.0000` | `0.9370` | `+0.0630` |
-| **Average Total** | **`0.8502`** | **`0.8052`** | **`+0.0450`** |
+| **Faithfulness** | `0.5238` | `0.4900` | `+0.0338` |
+| **Answer Relevance** | `0.3034` | `0.5688` | `-0.2654` |
+| **Context Recall** | `1.0000` | `1.0000` | `+0.0000` |
+| **Context Precision** | `1.0000` | `1.0000` | `+0.0000` |
+| **Average Total** | **`0.7068`** | **`0.7647`** | **`-0.0579`** |
 
 ---
 
 ## A/B Comparison Analysis
 
 **Config A (Hybrid Search + RRF Reranking):**
-> Kết hợp Semantic Search (`BAAI/bge-m3`) và Lexical Search (`BM25Okapi`) qua thuật toán Reciprocal Rank Fusion ($k=60$), đồng thời áp dụng reordering `[front + back[::-1]]` để hạn chế hiện tượng *Lost in the Middle*.
+> Kết hợp Semantic Search (`BAAI/bge-m3`) và Lexical Search (`BM25`) qua Reciprocal Rank
+> Fusion (k=60), đồng thời áp dụng reordering `front + back[::-1]` để hạn chế hiện tượng
+> *Lost in the Middle*.
 
 **Config B (Dense-Only Search):**
-> Chỉ sử dụng duy nhất Dense Vector Search với ChromaDB và cosine similarity, không qua thuật toán RRF fusion và không kết hợp với từ khóa BM25.
+> Chỉ dùng Dense Vector Search (ChromaDB + cosine similarity), không qua RRF fusion,
+> không kết hợp từ khóa BM25.
 
 **Kết luận:**
-> Config A đạt hiệu năng vượt trội hơn Config B toàn diện ở cả 4 chỉ số (đặc biệt là **Context Recall** cải thiện +0.0715 và **Context Precision** +0.0630). Việc kết hợp tìm kiếm ngữ nghĩa và từ khóa BM25 giúp truy xuất chính xác các điều khoản mã lỗi, tên quy định và thuật ngữ viết tắt trong chính sách e-commerce.
+> Config B đạt hiệu năng tốt hơn Config A trong lần chạy này
+> (Average `0.7068` vs `0.7647`). Số liệu lấy trực tiếp từ
+> RAGAS, không chỉnh sửa thủ công.
 
 ---
 
-## Worst Performers (Bottom 3)
+## Worst Performers (Bottom 3, theo Config A)
 
-| # | Question | Faithfulness | Relevance | Recall | Failure Stage | Root Cause |
-|---|----------|-------------|-----------|--------|---------------|------------|
-| 1 | Lý do khiến tài khoản người dùng bị khóa hoặc tạm dừng hoạt động là gì? | 0.71 | 0.83 | 0.65 | Retrieval - Term Mismatch | Từ khóa truy vấn chứa thuật ngữ đặc thù chuyên ngành chưa nằm trong từ điển BM25. |
-| 2 | Phí vận chuyển đơn hàng Shopee được tính dựa trên yếu tố nào? | 0.74 | 0.80 | 0.68 | Chunking - Split Boundary | Thông tin bị cắt đứt giữa 2 chunks liên tiếp do chunk_size 800 chưa đủ bao phủ bảng số liệu. |
-| 3 | Trường hợp nào người mua được chấp nhận trả hàng hoàn tiền? | 0.72 | 0.89 | 0.66 | Generation - Strict Prompting | System Prompt yêu cầu không suy luận quá khắt khe khi ngữ cảnh chỉ đề cập gián tiếp. |
-
+| # | Question | Faithfulness | Relevance | Recall |
+|---|----------|-------------|-----------|--------|
+| 1 | Người mua có thể yêu cầu trả hàng/hoàn tiền trong thời hạn bao lâu sau khi nhận hàng? | 0.00 | 0.00 | 1.00 |
+| 2 | Người bán không được đăng bán những sản phẩm nào trên sàn? | 0.86 | 0.00 | 1.00 |
+| 3 | Shopee hỗ trợ những phương thức thanh toán nào? | 0.71 | 0.91 | 1.00 |
 
 ---
 
 ## Recommendations (Đề Xuất Cải Tiến)
 
-### Cải tiến 1: Bổ sung Query Expansion / Hypothetical Document Embeddings (HyDE)
-- **Action**: Tự động sinh 2-3 câu hỏi đồng nghĩa hoặc câu trả lời giả lập trước khi gọi Retriever để bao phủ các cách diễn đạt khác nhau của người dùng.
-- **Expected impact**: Tăng **Context Recall** lên thêm +5-8% đối với câu hỏi ngắn hoặc chứa tiếng lóng.
+### Cải tiến 1: Bổ sung Query Expansion / HyDE
+- **Action**: Sinh 2-3 câu hỏi đồng nghĩa hoặc câu trả lời giả lập trước khi retrieve để bao
+  phủ nhiều cách diễn đạt khác nhau của người dùng.
+- **Kỳ vọng**: Tăng Context Recall cho câu hỏi ngắn/dùng từ khác với tài liệu gốc.
 
-### Cải tiến 2: Tối ưu Chunking Strategy theo cấu trúc Markdown / Parent Document
-- **Action**: Chuyển từ `RecursiveCharacterTextSplitter` thuần túy sang `MarkdownHeaderTextSplitter` kết hợp Parent-Child Chunking (lưu chunk nhỏ để search, trả chunk lớn làm context cho LLM).
-- **Expected impact**: Khắc phục lỗi ranh giới câu ở Worst Performer #2 và tăng **Faithfulness** lên mức > 0.90.
+### Cải tiến 2: Tối ưu Chunking theo cấu trúc Markdown
+- **Action**: Chuyển sang `MarkdownHeaderTextSplitter` + Parent-Child Chunking (chunk nhỏ để
+  search, trả chunk lớn làm context) để tránh cắt đứt thông tin ở ranh giới 2 chunk.
+- **Kỳ vọng**: Tăng Faithfulness cho các câu hỏi có worst score do context bị cắt.
 
-### Cải tiến 3: Tích hợp Cross-Encoder Reranker chuyên biệt cho tiếng Việt
-- **Action**: Sử dụng model Cross-Encoder (như `vietnamese-bi-encoder` hoặc `bge-reranker-large`) làm bước Rerank thứ 2 sau RRF.
-- **Expected impact**: Tăng chỉ số **Context Precision** bằng cách đẩy các chunk thực sự chứa câu trả lời lên top 1-2.
+### Cải tiến 3: Cross-Encoder Reranker chuyên biệt cho tiếng Việt
+- **Action**: Thêm bước rerank bằng cross-encoder (`bge-reranker-large` hoặc tương đương) sau
+  RRF để đẩy đúng chunk chứa câu trả lời lên top 1-2.
+- **Kỳ vọng**: Tăng Context Precision.

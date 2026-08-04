@@ -44,12 +44,13 @@ graph TD
 
 ## 📋 Phân Công Công Việc Nhóm (MichelinBoys)
 
-| Thành viên | Vai trò | Nhiệm vụ đảm nhận | Trạng thái |
-|-----------|---------|-------------------|------------|
-| **MichelinBoys Leader** | Team Leader & RAG Architect | Quản lý dự án, kiểm thử `pytest`, thiết kế kiến trúc RAG Pipeline | **Hoàn thành** |
-| **Data Specialist** | Data & Pipeline Engineer | Xây dựng Task 1..4, Task 9 (Hybrid Search, RRF Rerank, PageIndex Fallback) | **Hoàn thành** |
-| **Frontend Dev** | UI & Chatbot Engineer | Xây dựng Task 10, giao diện Streamlit `app.py`, trích dẫn nguồn citation | **Hoàn thành** |
-| **QA & Eval Engineer** | Evaluation Engineer | Xây dựng `golden_dataset.json`, script `eval_pipeline.py` & báo cáo `results.md` | **Hoàn thành** |
+| Thành viên | MSSV | Vai trò | Nhiệm vụ đảm nhận | Trạng thái |
+|-----------|------|---------|-------------------|------------|
+| **Bùi Hoàng Việt** | 2A202601392 | Team Leader & RAG Architect | Quản lý tiến độ, thiết kế kiến trúc tổng thể, tích hợp và kiểm thử toàn bộ RAG pipeline | **Hoàn thành** |
+| **Nguyễn Đình Duy** | 2A202601046 | Data & Retrieval Engineer | Chuẩn hóa dữ liệu, chunking, indexing, semantic search và lexical search BM25 | **Hoàn thành** |
+| **Hoàng Anh Minh** | 2A202601192 | RAG Pipeline Engineer | Xây dựng reranking, hybrid retrieval, RRF và cơ chế PageIndex fallback | **Hoàn thành** |
+| **Trần Trọng Nghĩa** | 2A202601370 | UI & Generation Engineer | Xây dựng generation có citation và giao diện chatbot Streamlit `app.py` | **Hoàn thành** |
+| **Nguyễn Thừa Tuân** | 2A202601330 | QA & Evaluation Engineer | Xây dựng golden dataset, evaluation pipeline, so sánh A/B và tổng hợp báo cáo kết quả | **Hoàn thành** |
 
 ---
 
