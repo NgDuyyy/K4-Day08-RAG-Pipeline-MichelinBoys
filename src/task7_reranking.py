@@ -16,6 +16,10 @@ quyết định fallback ở Task 9 — xem ghi chú ở đó.
 
 from typing import Optional
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 def rerank_cross_encoder(
     query: str, candidates: list[dict], top_k: int = 5
@@ -54,7 +58,36 @@ def rerank_cross_encoder(
     # Option B: Local model (Qwen3-Reranker)
     # from transformers import AutoModelForSequenceClassification, AutoTokenizer
     # ...
-    raise NotImplementedError("Implement rerank_cross_encoder")
+    if not candidates or top_k <= 0:
+        return []
+
+    import os
+    import requests
+
+    api_key = os.getenv("JINA_API_KEY", "")
+    if not api_key:
+        raise ValueError("JINA_API_KEY is required for cross_encoder reranking")
+
+    response = requests.post(
+        "https://api.jina.ai/v1/rerank",
+        headers={"Authorization": f"Bearer {api_key}"},
+        json={
+            "model": "jina-reranker-v2-base-multilingual",
+            "query": query,
+            "documents": [candidate["content"] for candidate in candidates],
+            "top_n": min(top_k, len(candidates)),
+        },
+        timeout=30,
+    )
+    response.raise_for_status()
+    reranked = response.json()["results"]
+    return [
+        {
+            **candidates[item["index"]],
+            "score": float(item["relevance_score"]),
+        }
+        for item in reranked
+    ]
 
 
 def rerank_mmr(
@@ -107,7 +140,61 @@ def rerank_mmr(
     #     remaining.remove(best_idx)
     #
     # return [candidates[i] for i in selected]
-    raise NotImplementedError("Implement rerank_mmr")
+    if not candidates or top_k <= 0:
+        return []
+    if not 0 <= lambda_param <= 1:
+        raise ValueError("lambda_param must be between 0 and 1")
+
+    import numpy as np
+
+    def cosine_sim(vector_a, vector_b):
+        array_a = np.asarray(vector_a, dtype=float)
+        array_b = np.asarray(vector_b, dtype=float)
+        if array_a.shape != array_b.shape:
+            raise ValueError("All embeddings must have the same dimension")
+        denominator = np.linalg.norm(array_a) * np.linalg.norm(array_b)
+        return float(np.dot(array_a, array_b) / denominator) if denominator else 0.0
+
+    selected = []
+    selected_scores = {}
+    remaining = list(range(len(candidates)))
+
+    for _ in range(min(top_k, len(candidates))):
+        best_idx = None
+        best_score = float("-inf")
+
+        for idx in remaining:
+            embedding = candidates[idx].get("embedding")
+            if embedding is None:
+                raise ValueError("Each MMR candidate must contain an 'embedding'")
+
+            relevance = cosine_sim(query_embedding, embedding)
+            max_sim_to_selected = max(
+                (
+                    cosine_sim(embedding, candidates[sel_idx]["embedding"])
+                    for sel_idx in selected
+                ),
+                default=0.0,
+            )
+            mmr_score = (
+                lambda_param * relevance
+                - (1 - lambda_param) * max_sim_to_selected
+            )
+
+            if mmr_score > best_score:
+                best_score = mmr_score
+                best_idx = idx
+
+        selected.append(best_idx)
+        selected_scores[best_idx] = best_score
+        remaining.remove(best_idx)
+
+    results = []
+    for idx in selected:
+        item = candidates[idx].copy()
+        item["score"] = float(selected_scores[idx])
+        results.append(item)
+    return results
 
 
 def rerank_rrf(
@@ -147,7 +234,40 @@ def rerank_rrf(
     #     results.append(item)
     #
     # return results
-    raise NotImplementedError("Implement rerank_rrf")
+    if top_k <= 0:
+        return []
+    if k < 0:
+        raise ValueError("k must be non-negative")
+
+    rrf_scores = {}
+    content_map = {}
+    first_seen = {}
+    sequence = 0
+
+    for ranked_list in ranked_lists:
+        seen_in_list = set()
+        for rank, item in enumerate(ranked_list, 1):
+            key = str(item.get("content", "")).strip()
+            if not key or key in seen_in_list:
+                continue
+            seen_in_list.add(key)
+            rrf_scores[key] = rrf_scores.get(key, 0) + 1 / (k + rank)
+            if key not in content_map:
+                content_map[key] = item
+                first_seen[key] = sequence
+                sequence += 1
+
+    sorted_items = sorted(
+        rrf_scores.items(),
+        key=lambda item: (-item[1], first_seen[item[0]]),
+    )
+
+    results = []
+    for content, score in sorted_items[:top_k]:
+        item = content_map[content].copy()
+        item["score"] = float(score)
+        results.append(item)
+    return results
 
 
 # =============================================================================
@@ -159,6 +279,8 @@ def rerank(
     candidates: list[dict],
     top_k: int = 5,
     method: str = "rrf",  # "cross_encoder" | "mmr" | "rrf"
+    query_embedding: Optional[list[float]] = None,
+    ranked_lists: Optional[list[list[dict]]] = None,
 ) -> list[dict]:
     """
     Unified reranking interface.
@@ -176,10 +298,52 @@ def rerank(
         return rerank_cross_encoder(query, candidates, top_k)
     elif method == "mmr":
         # Cần query_embedding - embed query trước
-        raise NotImplementedError("Call rerank_mmr with query_embedding")
+        if not candidates or top_k <= 0:
+            return []
+
+        if query_embedding is not None:
+            candidates_with_embeddings = candidates
+        else:
+            texts = [query] + [candidate["content"] for candidate in candidates]
+            try:
+                from sklearn.feature_extraction.text import TfidfVectorizer
+
+                matrix = TfidfVectorizer().fit_transform(texts).toarray()
+            except (ImportError, ValueError):
+                vocabulary = sorted({
+                    token
+                    for text in texts
+                    for token in text.casefold().split()
+                })
+                matrix = [
+                    [float(text.casefold().split().count(term)) for term in vocabulary]
+                    for text in texts
+                ]
+
+            query_embedding = matrix[0].tolist() if hasattr(matrix[0], "tolist") else matrix[0]
+            candidates_with_embeddings = []
+            for candidate, embedding in zip(candidates, matrix[1:]):
+                item = candidate.copy()
+                item["embedding"] = (
+                    embedding.tolist() if hasattr(embedding, "tolist") else embedding
+                )
+                candidates_with_embeddings.append(item)
+
+        return rerank_mmr(
+            query_embedding,
+            candidates_with_embeddings,
+            top_k=top_k,
+        )
     elif method == "rrf":
         # RRF cần nhiều ranked lists - gọi riêng
-        raise NotImplementedError("Call rerank_rrf with ranked_lists")
+        if ranked_lists is None:
+            ranked_candidates = sorted(
+                candidates,
+                key=lambda item: item.get("score", 0),
+                reverse=True,
+            )
+            ranked_lists = [ranked_candidates]
+        return rerank_rrf(ranked_lists, top_k=top_k)
     else:
         raise ValueError(f"Unknown rerank method: {method}")
 
